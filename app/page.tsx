@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type ProductItem = {
@@ -118,6 +118,19 @@ export default function Home() {
 
   const [showCart, setShowCart] =
     useState(false);
+
+  const [addedProductId, setAddedProductId] =
+    useState<number | null>(null);
+
+  const [lastAddedProduct, setLastAddedProduct] =
+    useState("");
+
+  const [showAddToast, setShowAddToast] =
+    useState(false);
+
+  const addFeedbackTimer = useRef<
+    ReturnType<typeof setTimeout> | null
+  >(null);
 
   const [showCheckout, setShowCheckout] =
     useState(false);
@@ -573,6 +586,20 @@ export default function Home() {
         },
       ];
     });
+
+    setAddedProductId(item.id);
+    setLastAddedProduct(item.product);
+    setShowAddToast(true);
+
+    if (addFeedbackTimer.current) {
+      clearTimeout(addFeedbackTimer.current);
+    }
+
+    addFeedbackTimer.current =
+      setTimeout(() => {
+        setAddedProductId(null);
+        setShowAddToast(false);
+      }, 2500);
   }
 
   function increaseQuantity(
@@ -1532,6 +1559,10 @@ export default function Home() {
                       onAddToCart={() =>
                         addToCart(item)
                       }
+                      justAdded={
+                        addedProductId ===
+                        item.id
+                      }
                     />
                   )
                 )}
@@ -1970,12 +2001,69 @@ export default function Home() {
                     onAddToCart={() =>
                       addToCart(item)
                     }
+                    justAdded={
+                      addedProductId ===
+                      item.id
+                    }
                   />
                 )
               )}
             </div>
           )}
       </section>
+
+      {/* MOBILE CART + ADD CONFIRMATION */}
+      {cartCount > 0 && (
+        <button
+          onClick={() => setShowCart(true)}
+          className="fixed bottom-4 right-4 z-[60] flex items-center gap-3 rounded-2xl bg-[#06150e] px-5 py-3.5 text-sm font-black text-white shadow-[0_15px_40px_rgba(6,21,14,0.35)] ring-1 ring-lime-300/20 transition duration-300 hover:scale-105 active:scale-95 sm:hidden"
+          aria-label={`Open cart with ${cartCount} item${
+            cartCount !== 1 ? "s" : ""
+          }`}
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-lime-400 text-lg text-[#06150e]">
+            🛒
+          </span>
+
+          <span>
+            Cart{" "}
+            <span className="text-lime-300">
+              ({cartCount})
+            </span>
+          </span>
+        </button>
+      )}
+
+      {showAddToast && (
+        <div className="pointer-events-none fixed bottom-20 left-4 right-4 z-[70] sm:bottom-6 sm:left-auto sm:right-6 sm:max-w-sm">
+          <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-white px-4 py-3.5 text-gray-900 shadow-[0_18px_50px_rgba(6,21,14,0.2)] ring-1 ring-green-100">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-600 text-xl text-white shadow-lg">
+              ✓
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-sm font-black text-green-700">
+                Added to cart
+              </p>
+
+              <p className="truncate text-xs font-semibold text-gray-500">
+                {lastAddedProduct}
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowAddToast(false);
+                setAddedProductId(null);
+              }}
+              className="pointer-events-auto ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-lg font-bold text-gray-500 transition hover:bg-gray-200"
+              aria-label="Close confirmation"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* FOOTER */}
       <footer className="relative overflow-hidden bg-[#06150e] text-white">
@@ -2058,10 +2146,12 @@ function Product({
   item,
   bestPrice,
   onAddToCart,
+  justAdded,
 }: {
   item: ProductItem;
   bestPrice: boolean;
   onAddToCart: () => void;
+  justAdded: boolean;
 }) {
   return (
     <div
@@ -2178,15 +2268,19 @@ function Product({
           <button
             onClick={onAddToCart}
             disabled={!item.available}
-            className={`rounded-xl px-5 py-2.5 text-sm font-black transition duration-300 ${
-              item.available
-                ? "border-2 border-green-600 bg-white text-green-700 hover:-translate-y-0.5 hover:bg-green-600 hover:text-white hover:shadow-lg"
-                : "cursor-not-allowed bg-gray-100 text-gray-400"
+            className={`rounded-xl px-5 py-2.5 text-sm font-black transition duration-300 active:scale-95 ${
+              !item.available
+                ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                : justAdded
+                  ? "bg-green-600 text-white shadow-lg shadow-green-200 ring-2 ring-green-200"
+                  : "border-2 border-green-600 bg-white text-green-700 hover:-translate-y-0.5 hover:bg-green-600 hover:text-white hover:shadow-lg"
             }`}
           >
-            {item.available
-              ? "ADD"
-              : "OUT"}
+            {!item.available
+              ? "OUT"
+              : justAdded
+                ? "✓ ADDED"
+                : "ADD"}
           </button>
         </div>
 
