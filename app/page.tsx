@@ -59,6 +59,11 @@ type CartItem = {
 const OFFER_QUANTITY = 3;
 const OFFER_DISCOUNT = 0.1;
 
+/*
+ * CATEGORY ICONS
+ * These are still used for category buttons and small UI elements.
+ * They are NOT used as product-image fallbacks.
+ */
 const categoryIcons: Record<string, string> = {
   All: "✨",
   Grocery: "🛒",
@@ -84,21 +89,6 @@ function getCategoryIcon(category: string) {
   return categoryIcons[category] || "🛍️";
 }
 
-function getProductImageUrl(
-  product: string,
-  category: string,
-  id: number,
-  fallback = false
-) {
-  const query = fallback
-    ? category
-    : `${product} ${category}`;
-
-  return `https://loremflickr.com/700/520/${encodeURIComponent(
-    query
-  )}?lock=${fallback ? id * 7 : id * 3}`;
-}
-
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -110,9 +100,12 @@ function getInitials(name: string) {
 
 export default function Home() {
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedShop, setSelectedShop] = useState<string | null>(null);
-  const [availableOnly, setAvailableOnly] = useState(false);
+  const [selectedCategory, setSelectedCategory] =
+    useState("All");
+  const [selectedShop, setSelectedShop] =
+    useState<string | null>(null);
+  const [availableOnly, setAvailableOnly] =
+    useState(false);
 
   const [databaseProducts, setDatabaseProducts] =
     useState<ProductItem[]>([]);
@@ -120,30 +113,50 @@ export default function Home() {
   const [databaseShops, setDatabaseShops] =
     useState<ShopDetails[]>([]);
 
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [showCart, setShowCart] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [cart, setCart] =
+    useState<CartItem[]>([]);
 
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [customerAddress, setCustomerAddress] = useState("");
+  const [showCart, setShowCart] =
+    useState(false);
 
-  const [loading, setLoading] = useState(true);
-  const [databaseError, setDatabaseError] = useState("");
+  const [showCheckout, setShowCheckout] =
+    useState(false);
+
+  const [orderPlaced, setOrderPlaced] =
+    useState(false);
+
+  const [customerName, setCustomerName] =
+    useState("");
+
+  const [customerPhone, setCustomerPhone] =
+    useState("");
+
+  const [customerAddress, setCustomerAddress] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [databaseError, setDatabaseError] =
+    useState("");
 
   useEffect(() => {
     loadProductsFromSupabase();
   }, []);
 
   useEffect(() => {
-    const savedCart = localStorage.getItem("localmarket-cart");
+    const savedCart =
+      localStorage.getItem(
+        "localmarket-cart"
+      );
 
     if (savedCart) {
       try {
         setCart(JSON.parse(savedCart));
       } catch {
-        localStorage.removeItem("localmarket-cart");
+        localStorage.removeItem(
+          "localmarket-cart"
+        );
       }
     }
   }, []);
@@ -159,13 +172,17 @@ export default function Home() {
     setLoading(true);
     setDatabaseError("");
 
-    const { data: shopData, error: shopError } =
-      await supabase
-        .from("shops")
-        .select(
-          "id, name, address, hours, rating, phone"
-        )
-        .order("id", { ascending: true });
+    const {
+      data: shopData,
+      error: shopError,
+    } = await supabase
+      .from("shops")
+      .select(
+        "id, name, address, hours, rating, phone"
+      )
+      .order("id", {
+        ascending: true,
+      });
 
     if (shopError) {
       console.error(
@@ -173,7 +190,10 @@ export default function Home() {
         shopError
       );
 
-      setDatabaseError(shopError.message);
+      setDatabaseError(
+        shopError.message
+      );
+
       setDatabaseShops([]);
       setDatabaseProducts([]);
       setLoading(false);
@@ -181,14 +201,18 @@ export default function Home() {
       return;
     }
 
-    const { data: productData, error: productError } =
-      await supabase
-        .from("products")
-        .select(
-          "id, name, category, brand, unit, price, distance, available, shop_id"
-        )
-        .order("id", { ascending: true })
-        .range(0, 9999);
+    const {
+      data: productData,
+      error: productError,
+    } = await supabase
+      .from("products")
+      .select(
+        "id, name, category, brand, unit, price, distance, available, shop_id"
+      )
+      .order("id", {
+        ascending: true,
+      })
+      .range(0, 9999);
 
     if (productError) {
       console.error(
@@ -196,14 +220,18 @@ export default function Home() {
         productError
       );
 
-      setDatabaseError(productError.message);
+      setDatabaseError(
+        productError.message
+      );
+
       setDatabaseProducts([]);
       setLoading(false);
 
       return;
     }
 
-    const shops = (shopData || []) as SupabaseShop[];
+    const shops =
+      (shopData || []) as SupabaseShop[];
 
     const dbProducts =
       (productData || []) as SupabaseProduct[];
@@ -213,7 +241,8 @@ export default function Home() {
         id: shop.id,
         name: shop.name,
         address:
-          shop.address || "Justice Market",
+          shop.address ||
+          "Justice Market",
         hours:
           shop.hours ||
           "Hours not available",
@@ -227,9 +256,12 @@ export default function Home() {
           "Phone not available",
       }));
 
-    setDatabaseShops(convertedShops);
+    setDatabaseShops(
+      convertedShops
+    );
 
-    const shopMap = new Map<number, string>();
+    const shopMap =
+      new Map<number, string>();
 
     shops.forEach((shop) => {
       shopMap.set(
@@ -243,8 +275,9 @@ export default function Home() {
         id: item.id,
         product: item.name,
         shop:
-          shopMap.get(item.shop_id) ||
-          "Unknown Shop",
+          shopMap.get(
+            item.shop_id
+          ) || "Unknown Shop",
         category: item.category,
         brand: item.brand || "",
         unit: item.unit || "",
@@ -673,11 +706,13 @@ export default function Home() {
 
         <div className="relative mx-auto max-w-7xl px-4 py-8 md:py-12">
           <div className="pointer-events-none absolute left-0 top-0 h-72 w-72 rounded-full bg-lime-300/20 blur-3xl" />
+
           <div className="pointer-events-none absolute right-0 top-40 h-80 w-80 rounded-full bg-green-300/20 blur-3xl" />
 
           {orderPlaced ? (
             <div className="relative mx-auto max-w-4xl overflow-hidden rounded-[2.5rem] bg-[#06150e] p-10 text-center text-white shadow-2xl md:p-16">
               <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-lime-400/20 blur-3xl" />
+
               <div className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-green-400/20 blur-3xl" />
 
               <div className="relative">
@@ -1385,6 +1420,7 @@ export default function Home() {
 
           <div className="relative overflow-hidden rounded-[2.5rem] bg-[#06150e] p-7 text-white shadow-2xl md:p-10">
             <div className="absolute -right-28 -top-28 h-96 w-96 rounded-full bg-lime-400/20 blur-3xl" />
+
             <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-green-500/10 blur-3xl" />
 
             <div className="relative flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
@@ -1401,12 +1437,15 @@ export default function Home() {
                   <p>
                     📍 {shop.address}
                   </p>
+
                   <p>
                     🕐 {shop.hours}
                   </p>
+
                   <p>
                     ⭐ {shop.rating} rating
                   </p>
+
                   <p>
                     📞 {shop.phone}
                   </p>
@@ -1539,6 +1578,7 @@ export default function Home() {
                 className="relative rounded-2xl bg-lime-400 px-4 py-2.5 font-black text-[#06150e] shadow-lg transition hover:scale-105 hover:bg-lime-300"
               >
                 🛒
+
                 <span className="hidden sm:inline">
                   {" "}
                   Cart
@@ -1557,9 +1597,10 @@ export default function Home() {
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-[#06150e] text-white">
-        {/* Decorative lights */}
         <div className="absolute -left-32 top-10 h-96 w-96 rounded-full bg-lime-400/20 blur-3xl" />
+
         <div className="absolute -right-32 top-0 h-[500px] w-[500px] rounded-full bg-emerald-400/10 blur-3xl" />
+
         <div className="absolute bottom-[-180px] left-[35%] h-[400px] w-[400px] rounded-full bg-green-500/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-12 md:pb-24 md:pt-20">
@@ -1568,16 +1609,20 @@ export default function Home() {
               <span className="animate-pulse">
                 ⚡
               </span>
+
               Shop local. Shop smarter.
             </div>
 
             <h2 className="text-5xl font-black leading-[0.95] tracking-[-0.04em] md:text-7xl lg:text-8xl">
               Find it.
               <br />
+
               <span className="text-lime-400">
                 Compare it.
               </span>
+
               <br />
+
               Get it nearby.
             </h2>
 
@@ -1675,7 +1720,8 @@ export default function Home() {
           <div className="mx-auto mt-12 grid max-w-4xl grid-cols-3 overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur">
             <div className="p-5 text-center">
               <p className="text-3xl font-black text-lime-400 md:text-4xl">
-                {databaseProducts.length || "500+"}
+                {databaseProducts.length ||
+                  "500+"}
               </p>
 
               <p className="mt-1 text-xs font-bold uppercase tracking-wider text-green-200">
@@ -1685,7 +1731,8 @@ export default function Home() {
 
             <div className="border-x border-white/10 p-5 text-center">
               <p className="text-3xl font-black text-lime-400 md:text-4xl">
-                {databaseShops.length || "12"}
+                {databaseShops.length ||
+                  "12"}
               </p>
 
               <p className="mt-1 text-xs font-bold uppercase tracking-wider text-green-200">
@@ -2016,33 +2063,6 @@ function Product({
   bestPrice: boolean;
   onAddToCart: () => void;
 }) {
-  const [imageUrl, setImageUrl] =
-    useState(
-      getProductImageUrl(
-        item.product,
-        item.category,
-        item.id
-      )
-    );
-
-  const [imageFailed, setImageFailed] =
-    useState(false);
-
-  function handleImageError() {
-    if (!imageFailed) {
-      setImageUrl(
-        getProductImageUrl(
-          item.product,
-          item.category,
-          item.id,
-          true
-        )
-      );
-
-      setImageFailed(true);
-    }
-  }
-
   return (
     <div
       className={`group relative overflow-hidden rounded-[1.75rem] bg-white shadow-sm transition duration-500 hover:-translate-y-2 hover:shadow-2xl ${
@@ -2051,60 +2071,38 @@ function Product({
           : "border border-white"
       }`}
     >
-      {/* IMAGE */}
-      <div className="relative h-52 overflow-hidden bg-gradient-to-br from-green-50 via-white to-lime-50">
-        {!imageFailed ? (
-          <img
-            src={imageUrl}
-            alt={item.product}
-            loading="lazy"
-            onError={
-              handleImageError
-            }
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-7xl">
-            {getCategoryIcon(
-              item.category
-            )}
-          </div>
-        )}
-
-        {/* IMAGE GRADIENT */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-60" />
-
-        {/* CATEGORY */}
-        <div className="absolute left-3 top-3 rounded-full border border-white/30 bg-black/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-white backdrop-blur-md">
+      {/* PRODUCT STATUS */}
+      <div className="flex items-center justify-between gap-2 px-5 pt-5">
+        <div className="rounded-full border border-green-100 bg-green-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-green-700">
           {item.category}
         </div>
 
-        {/* BEST PRICE */}
-        {bestPrice && (
-          <div className="absolute right-3 top-3 rounded-full bg-yellow-400 px-3 py-1.5 text-[10px] font-black text-yellow-950 shadow-lg">
-            🏷️ BEST PRICE
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {bestPrice && (
+            <div className="rounded-full bg-yellow-400 px-3 py-1.5 text-[10px] font-black text-yellow-950 shadow-lg">
+              🏷️ BEST PRICE
+            </div>
+          )}
 
-        {/* AVAILABILITY DOT */}
-        <div
-          className={`absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-black backdrop-blur ${
-            item.available
-              ? "bg-green-500/90 text-white"
-              : "bg-red-500/90 text-white"
-          }`}
-        >
-          <span
-            className={`h-2 w-2 rounded-full ${
+          <div
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-black ${
               item.available
-                ? "bg-lime-200"
-                : "bg-white"
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-600"
             }`}
-          />
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${
+                item.available
+                  ? "bg-green-500"
+                  : "bg-red-500"
+              }`}
+            />
 
-          {item.available
-            ? "IN STOCK"
-            : "OUT"}
+            {item.available
+              ? "IN STOCK"
+              : "OUT"}
+          </div>
         </div>
       </div>
 
@@ -2133,7 +2131,19 @@ function Product({
         {/* SHOP */}
         <button
           onClick={() =>
-            (window.location.href = "#")
+            setTimeout(() => {
+              const event =
+                new CustomEvent(
+                  "localmarket-shop",
+                  {
+                    detail: item.shop,
+                  }
+                );
+
+              window.dispatchEvent(
+                event
+              );
+            }, 0)
           }
           className="mt-4 flex w-full items-center gap-2 text-left"
         >
