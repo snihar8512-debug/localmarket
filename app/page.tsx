@@ -671,7 +671,7 @@ export default function Home() {
     );
   }
 
-  function placeOrder() {
+  async function placeOrder() {
     if (!customerName.trim()) {
       alert(
         "Please enter your name."
@@ -696,6 +696,23 @@ export default function Home() {
     if (cart.length === 0) {
       alert(
         "Your cart is empty."
+      );
+      return;
+    }
+
+    const { error } = await supabase
+      .from("orders")
+      .insert({
+        customer_name: customerName.trim(),
+        phone: customerPhone.trim(),
+        address: customerAddress.trim(),
+        total: Number(cartTotal.toFixed(2)),
+      });
+
+    if (error) {
+      console.error("Order save error:", error);
+      alert(
+        `Your order could not be saved. Please try again.\\n\\n${error.message}`
       );
       return;
     }
